@@ -6,4 +6,4 @@
 double hann(int n, int M);
 double hamming(int n, int M);
 double blackman(int n, int M);
-void windowing(int M, const double *data, int window, double *output);
+void windowing(const double *data, double *output, int M, int window);

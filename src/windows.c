@@ -14,7 +14,7 @@ double blackman(int n, int M) {
     return 0.42 - 0.5*cos(2*M_PI*n/M) + 0.08*cos(4*M_PI*n/M);
 }
 
-void windowing(int M, const double *data, int window, double *output) {
+void windowing(const double *data, double *output, int M, int window) {
     for (int n = 0; n < M; n++) {
         switch (window) {
             case RECTANGULAR:
