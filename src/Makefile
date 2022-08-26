@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-I.
+CFLAGS=-I./include/
 
 spectrum: spectrum.o windows.o
 	$(CC) -o spectrum spectrum.o windows.o -lm -lfftw3
