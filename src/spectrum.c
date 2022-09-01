@@ -2,10 +2,15 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
-#include <complex.h>
+#include <math.h>
+//#include <complex.h>
 #include <fftw3.h>
 #include "spectrum.h"
 #include "opts.h"
+#include "windows.h"
+
+#define REAL 0
+#define IMAG 1
 
 static void fft_initializer(fftw_complex *in, fftw_complex *out, fftw_plan plan, int nfft, int sides) {
     /* TODO
@@ -61,20 +66,40 @@ void welch(double *data, double *freqs, double *power, int N, opts *welchOpts) {
     int nstep = nperseg - noverlap;
     printf("nperseg: %d, noverlap: %d, nstep: %d\n", nperseg, noverlap, nstep);
     //fft_initializer(in, out, plan, welchOpts->nfft, welchOpts->sides);
+    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * welchOpts->nfft);
+    out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * welchOpts->nfft);
+    plan = fftw_plan_dft_1d(welchOpts->nfft, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
     printf("fft ok\n");
-    int num_frames = N / nstep + (N % nstep != 0);
+    int num_frames = N / nstep + (N % nstep != 0) - 1;
+    double *psd = calloc(num_frames, sizeof(*psd));
     double *frame = malloc(nperseg * sizeof(double));
+    double *windowed_frame = malloc(nperseg * sizeof(double));
     int i;
-    for (i = 0; i < num_frames-1; i++) {
+    for (i = 0; i < num_frames; i++) {
         memcpy(frame, data+i*nstep, nperseg*sizeof(double));
+        /* Apply a window */
+        //windowing(frame, windowed_frame, nperseg, welchOpts->window);
+        int k = 0;
+        for (int j = 0; j < nperseg; j+=2) {
+            in[k][REAL] = frame[j];
+            in[k][IMAG] = frame[j+1];
+            k++;
+        }
+        //memcpy(in, frame, nperseg*sizeof(double));
+        fftw_execute(plan);
         for (int j = 0; j < nperseg; j++) {
-            printf("%d\t%lf\t%lf\n", j, data[j], frame[j]);
+            double powVal = out[j][REAL]*out[j][REAL] + out[j][IMAG]*out[j][IMAG];
+            powVal /= nperseg;
+            psd[j] += powVal / num_frames;
         }
     }
     /* Last frame may be smaller if it is not padded, thus we ignore it
      * TODO: implement a padding to avoid ignoring it.
     **/
     printf("memcpy ok\n");
+    for (int j = 0; j < nperseg; j++) {
+        printf("%lf\n", psd[j]);
+    }
     
     /* */
     //fft_cleaner(in, out, plan); // There is a segfault here.
@@ -100,7 +125,7 @@ int main() {
     }
     double *freqs;
     double *power;
-    opts wopts = {1.0, 0, 2048, 1024, 2048, 1, 1, 1};
+    opts wopts = {1.0, 1, 2048, 1024, 2048, 1, 1, 1};
     welch(datad, freqs, power, samples, &wopts);
     /* Free memory */
     fclose(fp);
