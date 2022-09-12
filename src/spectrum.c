@@ -3,31 +3,11 @@
 #include <stdbool.h>
 #include <string.h>
 #include <math.h>
-//#include <complex.h>
-#include <fftw3.h>
+#include <kissfft/kiss_fft.h>
 #include "spectrum.h"
 #include "opts.h"
 #include "windows.h"
 
-#define REAL 0
-#define IMAG 1
-
-static void fft_initializer(fftw_complex *in, fftw_complex *out, fftw_plan plan, int nfft, int sides) {
-    /* TODO
-     * in complex => sides = 2
-     * in real => sides = 1 | sides = 2
-     * If data are real but sides == 2, we proceed as in the complex case.
-     */
-    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nfft);
-    out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * nfft);
-    plan = fftw_plan_dft_1d(nfft, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
-}
-
-static void fft_cleaner(fftw_complex *in, fftw_complex *out, fftw_plan plan) {
-    fftw_destroy_plan(plan);
-    fftw_free(in);
-    fftw_free(out);
-}
 
 static void spectral_helper(double *data_x, double *data_y, int N_x, int N_y, opts *spectralOpts) {
     /* We do not support cross power spectral density estimations yet */
@@ -38,6 +18,15 @@ static void spectral_helper(double *data_x, double *data_y, int N_x, int N_y, op
 
 void new_opts() {
 
+}
+
+void IQ2fftcpx(double *iq, kiss_fft_cpx *cpx, int N) {
+    int k = 0;
+    for (int j = 0; j < N; j+=2) {
+        cpx[k].r = iq[j];
+        cpx[k].i = iq[j+1];
+        k++;
+    }
 }
 
 void check_welch_opts(opts *welchOpts) {
@@ -57,40 +46,35 @@ void check_welch_opts(opts *welchOpts) {
  * @param N Number of samples in data.
  */
 void welch(double *data, double *freqs, double *power, int N, opts *welchOpts) {
-    fftw_plan plan;
-    fftw_complex *in, *out;
     //check_welch_opts(welchOpts);
     /* Part of the code below should be moved to spectral_helper */
     int nperseg = welchOpts->nperseg;
     int noverlap = welchOpts->noverlap;
     int nstep = nperseg - noverlap;
-    printf("nperseg: %d, noverlap: %d, nstep: %d\n", nperseg, noverlap, nstep);
-    //fft_initializer(in, out, plan, welchOpts->nfft, welchOpts->sides);
-    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * welchOpts->nfft);
-    out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * welchOpts->nfft);
-    plan = fftw_plan_dft_1d(welchOpts->nfft, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
-    printf("fft ok\n");
+    kiss_fft_cfg cfg = kiss_fft_alloc(welchOpts->nfft, 0, 0, 0);
+    kiss_fft_cpx *in = (kiss_fft_cpx*) malloc(sizeof(kiss_fft_cpx) * welchOpts->nfft);
+    kiss_fft_cpx *out = (kiss_fft_cpx*) malloc(sizeof(kiss_fft_cpx) * welchOpts->nfft);
+    kiss_fft_cpx *data_cpx = (kiss_fft_cpx*) malloc(sizeof(kiss_fft_cpx) * N/2);
+    /* TODO: check if data is complex or not */
+    IQ2fftcpx(data, data_cpx, N);
+    N = N/2;
     int num_frames = N / nstep + (N % nstep != 0) - 1;
-    double *psd = calloc(num_frames, sizeof(*psd));
-    double *frame = malloc(nperseg * sizeof(double));
+    printf("nperseg: %d, noverlap: %d, nstep: %d, nframes: %d\n", nperseg, noverlap, nstep, num_frames);
+    kiss_fft_cpx *frame = malloc(nperseg * sizeof(kiss_fft_cpx));
     double *windowed_frame = malloc(nperseg * sizeof(double));
-    int i;
-    for (i = 0; i < num_frames; i++) {
-        memcpy(frame, data+i*nstep, nperseg*sizeof(double));
+    double powVal;
+    int k;
+    for (k = 0; k < num_frames; k++) {
+        memcpy(frame, data_cpx+k*nstep, nperseg*sizeof(kiss_fft_cpx));
         /* Apply a window */
         //windowing(frame, windowed_frame, nperseg, welchOpts->window);
-        int k = 0;
-        for (int j = 0; j < nperseg; j+=2) {
-            in[k][REAL] = frame[j];
-            in[k][IMAG] = frame[j+1];
-            k++;
-        }
-        //memcpy(in, frame, nperseg*sizeof(double));
-        fftw_execute(plan);
+        memcpy(in, frame, nperseg*sizeof(kiss_fft_cpx));
+        kiss_fft(cfg, in, out);
+
+        /* Compute PSD */
         for (int j = 0; j < nperseg; j++) {
-            double powVal = out[j][REAL]*out[j][REAL] + out[j][IMAG]*out[j][IMAG];
-            powVal /= nperseg;
-            psd[j] += powVal / num_frames;
+            powVal = (out[j].r*out[j].r + out[j].i*out[j].i) / nperseg;
+            power[j] += powVal / num_frames;
         }
     }
     /* Last frame may be smaller if it is not padded, thus we ignore it
@@ -98,12 +82,15 @@ void welch(double *data, double *freqs, double *power, int N, opts *welchOpts) {
     **/
     printf("memcpy ok\n");
     for (int j = 0; j < nperseg; j++) {
-        printf("%lf\n", psd[j]);
+        printf("%d\t %lf\n", j, power[j]);
     }
-    
-    /* */
-    //fft_cleaner(in, out, plan); // There is a segfault here.
-    //printf("fft clean ok\n");
+
+    free(in);
+    free(out);
+    free(frame);
+    free(windowed_frame);
+    free(data_cpx);
+    kiss_fft_free(cfg);
 }
 
 int main() {
@@ -123,11 +110,13 @@ int main() {
     for (int i = 0; i < samples; i++) {
         datad[i] = (double)data[i];
     }
+    int nperseg = 2048;
     double *freqs;
-    double *power;
-    opts wopts = {1.0, 1, 2048, 1024, 2048, 1, 1, 1};
+    double *power = calloc(nperseg, sizeof(*power));
+    opts wopts = {1.0, 0, nperseg, 1024, nperseg, 1, 1, 1};
     welch(datad, freqs, power, samples, &wopts);
     /* Free memory */
     fclose(fp);
     free(data);
+    free(power);
 }
