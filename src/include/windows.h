@@ -3,7 +3,7 @@
 #define HAMMING 2
 #define BLACKMAN 3
 
-double hann(int n, int M);
-double hamming(int n, int M);
-double blackman(int n, int M);
-void windowing(const double *data, double *output, int M, int window);
+kiss_fft_scalar hann(int n, int M);
+kiss_fft_scalar hamming(int n, int M);
+kiss_fft_scalar blackman(int n, int M);
+void windowing(const kiss_fft_cpx *data, kiss_fft_cpx *output, int M, int window);

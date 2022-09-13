@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 #include <math.h>
 #include <kissfft/kiss_fft.h>
@@ -35,6 +36,55 @@ void check_welch_opts(opts *welchOpts) {
     }
 }
 
+
+typedef struct {
+    int32_t value;
+    uint16_t index;
+} akaike;
+
+int cmp(const void *a, const void *b) {
+    akaike *a1 = (akaike *)a;
+    akaike *a2 = (akaike *)b;
+    if ((*a1).value > (*a2).value)
+        return -1;
+    else if ((*a1).value < (*a2).value)
+        return 1;
+    else
+        return 0;
+}
+
+double noise_power_aic(const double *psd, int N, opts *welchOpts) {
+    int nperseg = welchOpts->nperseg;
+    int noverlap = welchOpts->noverlap;
+    int nstep = nperseg - noverlap;
+    N = N/2;
+    int num_frames = N / nstep + (N % nstep != 0) - 1;
+    akaike *aic = calloc(nperseg, sizeof(*aic));
+    /* Compute Akaike Information Criterion (AIC) */
+    float powSum;
+    float powProduct;
+    double aic_n;
+    for (int k = 0; k < nperseg; k++) {
+        powSum = 0.0;
+        powProduct = 1.0;
+        for (int i=k; i < nperseg; i++) {
+            powSum += psd[i] / (nperseg-k);
+            powProduct *= pow(psd[i], 1.0/(nperseg-k));
+        }
+        aic_n = (nperseg-k)*num_frames*log(powSum/powProduct)+k*(2*nperseg-k);
+        aic[k].index = k;
+        aic[k].value = (int32_t)aic_n;
+    }
+    /* Sort the AIC array and find the index of the minimum value */
+    qsort(aic, nperseg, sizeof(akaike), cmp);
+    int kmin = aic[nperseg-1].index;
+    double noise_power = 0.0;
+    for (int i = kmin; i < nperseg; i++) {
+        noise_power += psd[i]/(nperseg-kmin);
+    }
+    return noise_power;
+}
+
 /**
  * Estimate power spectral density using Welch's method. The method consists in splitting
  * the data in overlapping segments, computing the modified periodogram for each segment
@@ -61,14 +111,19 @@ void welch(double *data, double *freqs, double *power, int N, opts *welchOpts) {
     int num_frames = N / nstep + (N % nstep != 0) - 1;
     printf("nperseg: %d, noverlap: %d, nstep: %d, nframes: %d\n", nperseg, noverlap, nstep, num_frames);
     kiss_fft_cpx *frame = malloc(nperseg * sizeof(kiss_fft_cpx));
-    double *windowed_frame = malloc(nperseg * sizeof(double));
+    kiss_fft_cpx *windowed_frame = malloc(nperseg * sizeof(kiss_fft_cpx));
     double powVal;
     int k;
     for (k = 0; k < num_frames; k++) {
         memcpy(frame, data_cpx+k*nstep, nperseg*sizeof(kiss_fft_cpx));
-        /* Apply a window */
-        //windowing(frame, windowed_frame, nperseg, welchOpts->window);
-        memcpy(in, frame, nperseg*sizeof(kiss_fft_cpx));
+        /* Apply a window
+         * TODO: check non-rectangular windows.
+        **/
+        windowing(frame, windowed_frame, nperseg, welchOpts->window);
+        for (int j = 0; j < nperseg; j++) {
+            printf("%lf %lf\n", windowed_frame[j].r, windowed_frame[j].i);
+        }
+        memcpy(in, windowed_frame, nperseg*sizeof(kiss_fft_cpx));
         kiss_fft(cfg, in, out);
 
         /* Compute PSD */
@@ -82,7 +137,7 @@ void welch(double *data, double *freqs, double *power, int N, opts *welchOpts) {
     **/
     printf("memcpy ok\n");
     for (int j = 0; j < nperseg; j++) {
-        printf("%d\t %lf\n", j, power[j]);
+        //printf("%d\t %lf\n", j, power[j]);
     }
 
     free(in);
@@ -113,8 +168,10 @@ int main() {
     int nperseg = 2048;
     double *freqs;
     double *power = calloc(nperseg, sizeof(*power));
-    opts wopts = {1.0, 0, nperseg, 1024, nperseg, 1, 1, 1};
+    opts wopts = {1.0, 0, nperseg, 1024, nperseg, true, 1, 1, 1};
     welch(datad, freqs, power, samples, &wopts);
+    double noise_power = noise_power_aic(power, samples, &wopts);
+    printf("Estimated noise power = %lf\n", noise_power);
     /* Free memory */
     fclose(fp);
     free(data);
