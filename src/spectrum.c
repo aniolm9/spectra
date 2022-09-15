@@ -36,7 +36,6 @@ void check_welch_opts(opts *welchOpts) {
     }
 }
 
-
 typedef struct {
     int32_t value;
     uint16_t index;
@@ -58,11 +57,11 @@ double noise_power_aic(const double *psd, int N, opts *welchOpts) {
     int noverlap = welchOpts->noverlap;
     int nstep = nperseg - noverlap;
     N = N/2;
-    int num_frames = N / nstep + (N % nstep != 0) - 1;
+    int num_frames = N / nstep + (N % nstep != 0) - 1 - 1;
     akaike *aic = calloc(nperseg, sizeof(*aic));
     /* Compute Akaike Information Criterion (AIC) */
-    float powSum;
-    float powProduct;
+    double powSum;
+    double powProduct;
     double aic_n;
     for (int k = 0; k < nperseg; k++) {
         powSum = 0.0;
@@ -96,8 +95,9 @@ double noise_power_aic(const double *psd, int N, opts *welchOpts) {
  * @param N Number of samples in data.
  */
 void welch(double *data, double *freqs, double *power, int N, opts *welchOpts) {
+    /* TODO: check welch options */
     //check_welch_opts(welchOpts);
-    /* Part of the code below should be moved to spectral_helper */
+    /* TODO: Part of the code below should be moved to spectral_helper */
     int nperseg = welchOpts->nperseg;
     int noverlap = welchOpts->noverlap;
     int nstep = nperseg - noverlap;
@@ -108,27 +108,23 @@ void welch(double *data, double *freqs, double *power, int N, opts *welchOpts) {
     /* TODO: check if data is complex or not */
     IQ2fftcpx(data, data_cpx, N);
     N = N/2;
-    int num_frames = N / nstep + (N % nstep != 0) - 1;
+    int num_frames = N / nstep + (N % nstep != 0) - 1 - 1;
     printf("nperseg: %d, noverlap: %d, nstep: %d, nframes: %d\n", nperseg, noverlap, nstep, num_frames);
     kiss_fft_cpx *frame = malloc(nperseg * sizeof(kiss_fft_cpx));
     kiss_fft_cpx *windowed_frame = malloc(nperseg * sizeof(kiss_fft_cpx));
     double powVal;
     int k;
     for (k = 0; k < num_frames; k++) {
+        /* Create a frame of size nperseg with nstep new samples */
         memcpy(frame, data_cpx+k*nstep, nperseg*sizeof(kiss_fft_cpx));
-        /* Apply a window
-         * TODO: check non-rectangular windows.
-        **/
-        windowing(frame, windowed_frame, nperseg, welchOpts->window);
-        for (int j = 0; j < nperseg; j++) {
-            printf("%lf %lf\n", windowed_frame[j].r, windowed_frame[j].i);
-        }
+        /* Apply a window */
+        kiss_fft_scalar scale = windowing(frame, windowed_frame, nperseg, welchOpts->window, welchOpts->fs, welchOpts->scaling);
+        /* Copy the windowed frame into a new array and compute the FFT */
         memcpy(in, windowed_frame, nperseg*sizeof(kiss_fft_cpx));
         kiss_fft(cfg, in, out);
-
         /* Compute PSD */
         for (int j = 0; j < nperseg; j++) {
-            powVal = (out[j].r*out[j].r + out[j].i*out[j].i) / nperseg;
+            powVal = (out[j].r*out[j].r + out[j].i*out[j].i) * scale;
             power[j] += powVal / num_frames;
         }
     }
@@ -136,9 +132,6 @@ void welch(double *data, double *freqs, double *power, int N, opts *welchOpts) {
      * TODO: implement a padding to avoid ignoring it.
     **/
     printf("memcpy ok\n");
-    for (int j = 0; j < nperseg; j++) {
-        //printf("%d\t %lf\n", j, power[j]);
-    }
 
     free(in);
     free(out);
@@ -168,7 +161,7 @@ int main() {
     int nperseg = 2048;
     double *freqs;
     double *power = calloc(nperseg, sizeof(*power));
-    opts wopts = {1.0, 0, nperseg, 1024, nperseg, true, 1, 1, 1};
+    opts wopts = {1.0, 1, nperseg, 1024, nperseg, true, 1, 1, 1};
     welch(datad, freqs, power, samples, &wopts);
     double noise_power = noise_power_aic(power, samples, &wopts);
     printf("Estimated noise power = %lf\n", noise_power);
