@@ -5,6 +5,7 @@
 #include <string.h>
 #include <math.h>
 #include <kissfft/kiss_fft.h>
+#include <gsl/gsl_cdf.h>
 #include "spectrum.h"
 #include "opts.h"
 #include "windows.h"
@@ -84,6 +85,24 @@ double noise_power_aic(const double *psd, int N, opts *welchOpts) {
     return noise_power;
 }
 
+void energy_detector(double *data, bool *signal_presence, int N, double noise_power, float Pfa, int df) {
+    kiss_fft_cpx *data_cpx = (kiss_fft_cpx*) malloc(sizeof(kiss_fft_cpx) * N/2);
+    /* TODO: check if data is complex or not */
+    IQ2fftcpx(data, data_cpx, N);
+    N = N/2;
+    double gamma = gsl_cdf_chisq_Qinv(Pfa, df) * noise_power;
+    double energy;
+    for (int j = 0; j < N; j++) {
+        energy = 0.0;
+        for (int k = j; k < j+df; k++) {
+            energy += data_cpx[k].r*data_cpx[k].r + data_cpx[k].i*data_cpx[k].i;
+        }
+        signal_presence[j] = energy > gamma;
+    }
+    /* Free memory */
+    free(data_cpx);
+}
+
 /**
  * Estimate power spectral density using Welch's method. The method consists in splitting
  * the data in overlapping segments, computing the modified periodogram for each segment
@@ -109,7 +128,6 @@ void welch(double *data, double *freqs, double *power, int N, opts *welchOpts) {
     IQ2fftcpx(data, data_cpx, N);
     N = N/2;
     int num_frames = N / nstep + (N % nstep != 0) - 1 - 1;
-    printf("nperseg: %d, noverlap: %d, nstep: %d, nframes: %d\n", nperseg, noverlap, nstep, num_frames);
     kiss_fft_cpx *frame = malloc(nperseg * sizeof(kiss_fft_cpx));
     kiss_fft_cpx *windowed_frame = malloc(nperseg * sizeof(kiss_fft_cpx));
     double powVal;
@@ -131,8 +149,7 @@ void welch(double *data, double *freqs, double *power, int N, opts *welchOpts) {
     /* Last frame may be smaller if it is not padded, thus we ignore it
      * TODO: implement a padding to avoid ignoring it.
     **/
-    printf("memcpy ok\n");
-
+    /* Free memory */
     free(in);
     free(out);
     free(frame);
@@ -161,10 +178,12 @@ int main() {
     int nperseg = 2048;
     double *freqs;
     double *power = calloc(nperseg, sizeof(*power));
+    bool *signal_presence = malloc(samples/2 * sizeof(bool));
     opts wopts = {1.0, 1, nperseg, 1024, nperseg, true, 1, 1, 1};
     welch(datad, freqs, power, samples, &wopts);
     double noise_power = noise_power_aic(power, samples, &wopts);
     printf("Estimated noise power = %lf\n", noise_power);
+    energy_detector(datad, signal_presence, samples, noise_power, 0.05, 4096);
     /* Free memory */
     fclose(fp);
     free(data);
