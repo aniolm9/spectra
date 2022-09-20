@@ -1,9 +1,12 @@
 CC=gcc
-CFLAGS=-I./include/ -O3 -ffast-math -Wall
+CFLAGS=-I./include/ -O3 -ffast-math -Wall -fPIC
 LIBS=
 
 spectrum: spectrum.o windows.o
 	$(CC) $(CFLAGS) -o spectrum spectrum.o windows.o $(LIBS) -lm -lkissfft-float -lgsl
 
+lib: spectrum.o windows.o
+	$(CC) spectrum.o windows.o -shared -o libspectrum.so
+
 clean:
-	rm -f *.o spectrum
+	rm -f *.o *.so spectrum
