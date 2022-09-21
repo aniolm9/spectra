@@ -7,7 +7,6 @@
 #include <kissfft/kiss_fft.h>
 #include <gsl/gsl_cdf.h>
 #include "spectrum.h"
-#include "opts.h"
 #include "windows.h"
 
 static void IQ2fftcpx(double *iq, kiss_fft_cpx *cpx, int N) {
@@ -212,6 +211,7 @@ int main() {
     double *datad = malloc(samples*sizeof(double));
     for (int i = 0; i < samples; i++) {
         datad[i] = (double)data[i];
+        printf("%lf\n", datad[i]);
     }
     int nperseg = 2048;
     double *freqs;
@@ -226,4 +226,5 @@ int main() {
     fclose(fp);
     free(data);
     free(power);
+    free(signal_presence);
 }
