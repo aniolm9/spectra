@@ -3,18 +3,50 @@
 #include <kissfft/kiss_fft.h>
 #include "windows.h"
 
+/**
+ * Hann window.
+ *
+ * @param n Index of current sample.
+ * @param M Window size.
+ * @return The value of the window of size M at position n.
+ */
 kiss_fft_scalar hann(int n, int M) {
     return 0.5 - 0.5*cos(2*M_PI*n/(M-1));
 }
 
+/**
+ * Hamming window.
+ *
+ * @param n Index of current sample.
+ * @param M Window size.
+ * @return The value of the window of size M at position n.
+ */
 kiss_fft_scalar hamming(int n, int M) {
     return 0.54 - 0.46*cos(2*M_PI*n/(M-1));
 }
 
+/**
+ * Blackman window.
+ *
+ * @param n Index of current sample.
+ * @param M Window size.
+ * @return The value of the window of size M at position n.
+ */
 kiss_fft_scalar blackman(int n, int M) {
     return 0.42 - 0.5*cos(2*M_PI*n/M) + 0.08*cos(4*M_PI*n/M);
 }
 
+/**
+ * Apply a supported window to an array of samples.
+ *
+ * @param data Array of input samples as kiss_fft_cpx scalars.
+ * @param output Array of output samples after applying the window.
+ * @param M Size of the window.
+ * @param window Type of the window.
+ * @param fs Sampling frequency.
+ * @param scaling Type of scaling: PSD or spectrum.
+ * @return The scaling factor.
+ */
 kiss_fft_scalar windowing(const kiss_fft_cpx *data, kiss_fft_cpx *output, int M, int window, float fs, int scaling) {
     kiss_fft_scalar scale_density = 0.0;
     kiss_fft_scalar scale_spectrum = 0.0;
