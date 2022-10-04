@@ -9,6 +9,27 @@
 #include "spectrum.h"
 #include "windows.h"
 
+void new_opts() {
+    /* Some comments about the input parameters:
+     * nfft < nperseg => error
+     * noverlap >= nperseg => error
+    **/
+}
+
+void check_welch_opts(opts *welchOpts) {
+    if (!welchOpts) {
+
+    }
+}
+
+/**
+ * Transform an array of doubles (in IQ format) into a
+ * kiss_fft_cpx array.
+ *
+ * @param iq Input array of IQ samples (as doubles).
+ * @param cpx Output array as kiss_fft_cpx scalars.
+ * @param N Number of samples in the input array.
+ */
 static void IQ2fftcpx(double *iq, kiss_fft_cpx *cpx, int N) {
     int k = 0;
     for (int j = 0; j < N; j+=2) {
@@ -18,7 +39,15 @@ static void IQ2fftcpx(double *iq, kiss_fft_cpx *cpx, int N) {
     }
 }
 
-static int compute_num_frames(opts *spectralOpts, int N) {
+/**
+ * Estimate power spectral density using Welch's method. The method consists in splitting
+ * the data in overlapping segments, computing the modified periodogram for each segment
+ * and finally averaging the periodograms.
+ *
+ * @param N Number of samples in data.
+ * @param welchOpts Struct containing the internal settings of the estimators.
+ */
+static int compute_num_frames(int N, opts *spectralOpts) {
     /* TODO: support padding. One -1 will go away if we pad */
     int nperseg = spectralOpts->nperseg;
     int noverlap = spectralOpts->noverlap;
@@ -28,14 +57,24 @@ static int compute_num_frames(opts *spectralOpts, int N) {
     return num_frames;
 }
 
+/**
+ * Estimate power spectral density using Welch's method. The method consists in splitting
+ * the data in overlapping segments, computing the modified periodogram for each segment
+ * and finally averaging the periodograms.
+ *
+ * @param data_x First input data array (as doubles).
+ * @param data_y Second input data array (as doubles).
+ * @param freqs Output array containing the sample frequencies.
+ * @param psd Output matrix where each row is a frame and each column a sample.
+ * @param N_x Number of samples in data_x.
+ * @param N_y Number of samples in data_y.
+ * @param spectralOpts Struct containing the internal settings of the estimators.
+ */
 static void spectral_helper(double *data_x, double *data_y, double *freqs, double **psd, int N_x, int N_y, opts *spectralOpts) {
     /* TODO: We do not support cross power spectral density estimations yet */
     if (data_x != data_y) {
         fprintf(stderr, "different input arrays not supported\n");
     } else {
-        /* TODO: check welch options */
-        //check_welch_opts(welchOpts);
-        /* TODO: Part of the code below should be moved to spectral_helper */
         int nperseg = spectralOpts->nperseg;
         int noverlap = spectralOpts->noverlap;
         int nstep = nperseg - noverlap;
@@ -78,20 +117,13 @@ static void spectral_helper(double *data_x, double *data_y, double *freqs, doubl
     }
 }
 
-void new_opts() {
-    /* Some comments about the input parameters:
-     * nfft < nperseg => error
-     * noverlap >= nperseg => error
-    **/
-}
-
-void check_welch_opts(opts *welchOpts) {
-    if (!welchOpts) {
-
-    }
-}
-
-int cmp(const void *a, const void *b) {
+/**
+ * Compare two akaike structs.
+ *
+ * @param a First akaike struct.
+ * @param b Second akaike struct.
+ */
+int cmp_akaike(const void *a, const void *b) {
     akaike *a1 = (akaike *)a;
     akaike *a2 = (akaike *)b;
     if ((*a1).value > (*a2).value)
@@ -102,9 +134,16 @@ int cmp(const void *a, const void *b) {
         return 0;
 }
 
+/**
+ * Estimate the noise power of a signal using the Akaike Information Criterion (AIC).
+ *
+ * @param psd Output matrix where each row is a frame and each column a sample.
+ * @param N Number of samples in data.
+ * @param welchOpts Struct containing the internal settings of the estimators.
+ */
 double noise_power_aic(const double *psd, int N, opts *welchOpts) {
     int nperseg = welchOpts->nperseg;
-    int num_frames = compute_num_frames(welchOpts, N);
+    int num_frames = compute_num_frames(N, welchOpts);
     akaike *aic = calloc(nperseg, sizeof(*aic));
     /* Compute Akaike Information Criterion (AIC) */
     double powSum;
@@ -122,7 +161,7 @@ double noise_power_aic(const double *psd, int N, opts *welchOpts) {
         aic[k].value = (int32_t)aic_n;
     }
     /* Sort the AIC array and find the index of the minimum value */
-    qsort(aic, nperseg, sizeof(akaike), cmp);
+    qsort(aic, nperseg, sizeof(akaike), cmp_akaike);
     int kmin = aic[nperseg-1].index;
     double noise_power = 0.0;
     for (int i = kmin; i < nperseg; i++) {
@@ -131,6 +170,16 @@ double noise_power_aic(const double *psd, int N, opts *welchOpts) {
     return noise_power;
 }
 
+/**
+ * Detects signal presence based on a classical energy detector.
+ *
+ * @param data Input array with the data samples (as doubles).
+ * @param signal_presense Output array with "true" in the positions where a signal is detected.
+ * @param N Number of samples in data.
+ * @param noise_power Power of the noise.
+ * @param Pfa Probability of false alarm.
+ * @param df Degrees of freedom.
+ */
 void energy_detector(double *data, bool *signal_presence, int N, double noise_power, float Pfa, int df) {
     kiss_fft_cpx *data_cpx = (kiss_fft_cpx*) malloc(sizeof(kiss_fft_cpx) * N/2);
     /* TODO: check if data is complex or not */
@@ -158,11 +207,14 @@ void energy_detector(double *data, bool *signal_presence, int N, double noise_po
  * @param freqs Output array containing the sample frequencies.
  * @param power Output array with the power spectral density of data.
  * @param N Number of samples in data.
+ * @param welchOpts Struct containing the internal settings of the estimators.
  */
 void welch(double *data, double *freqs, double *power, int N, opts *welchOpts) {
+    /* TODO: check welch options */
+    //check_welch_opts(welchOpts);
     /* Declare some useful variables from the welchOpts struct */
     int nperseg = welchOpts->nperseg;
-    int num_frames = compute_num_frames(welchOpts, N);
+    int num_frames = compute_num_frames(N, welchOpts);
     int average = welchOpts->average;
     /* Allocate a 2-D array for the PSD */
     double **psd = (double **) malloc(num_frames * sizeof(double*));
