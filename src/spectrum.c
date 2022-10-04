@@ -16,7 +16,7 @@ void new_opts() {
     **/
 }
 
-void check_welch_opts(opts *welchOpts) {
+static void check_welch_opts(opts *welchOpts) {
     if (!welchOpts) {
 
     }
@@ -40,12 +40,12 @@ static void IQ2fftcpx(double *iq, kiss_fft_cpx *cpx, int N) {
 }
 
 /**
- * Estimate power spectral density using Welch's method. The method consists in splitting
- * the data in overlapping segments, computing the modified periodogram for each segment
- * and finally averaging the periodograms.
+ * Compute the number of frames in which the data array is divided. It uses
+ * the total number of samples, the frame length and the number of overlapping samples.
  *
  * @param N Number of samples in data.
  * @param welchOpts Struct containing the internal settings of the estimators.
+ * @return The number of frames in which the data array is divided.
  */
 static int compute_num_frames(int N, opts *spectralOpts) {
     /* TODO: support padding. One -1 will go away if we pad */
@@ -58,9 +58,8 @@ static int compute_num_frames(int N, opts *spectralOpts) {
 }
 
 /**
- * Estimate power spectral density using Welch's method. The method consists in splitting
- * the data in overlapping segments, computing the modified periodogram for each segment
- * and finally averaging the periodograms.
+ * Helper function that can be used in different spectral estimation tools, such as
+ * the periodogram or the averaged periodogram.
  *
  * @param data_x First input data array (as doubles).
  * @param data_y Second input data array (as doubles).
@@ -122,8 +121,9 @@ static void spectral_helper(double *data_x, double *data_y, double *freqs, doubl
  *
  * @param a First akaike struct.
  * @param b Second akaike struct.
+ * @return -1 if the value of a is greater than that of b, 1 if smaller, 0 otherwise.
  */
-int cmp_akaike(const void *a, const void *b) {
+static int cmp_akaike(const void *a, const void *b) {
     akaike *a1 = (akaike *)a;
     akaike *a2 = (akaike *)b;
     if ((*a1).value > (*a2).value)
@@ -140,6 +140,7 @@ int cmp_akaike(const void *a, const void *b) {
  * @param psd Output matrix where each row is a frame and each column a sample.
  * @param N Number of samples in data.
  * @param welchOpts Struct containing the internal settings of the estimators.
+ * @return A double with the noise power estimate.
  */
 double noise_power_aic(const double *psd, int N, opts *welchOpts) {
     int nperseg = welchOpts->nperseg;
@@ -247,6 +248,24 @@ void welch(double *data, double *freqs, double *power, int N, opts *welchOpts) {
     free(psd);
 }
 
+/**
+ * Estimate power spectral density using a periodogram.
+ *
+ * @param data Input array with the data samples (as doubles).
+ * @param freqs Output array containing the sample frequencies.
+ * @param power Output array with the power spectral density of data.
+ * @param N Number of samples in data.
+ * @param welchOpts Struct containing the internal settings of the estimators.
+ */
+void periodogram(double *data, double *freqs, double *power, int N, opts *welchOpts) {
+    /* TODO: check welch options */
+    //check_welch_opts(welchOpts);
+    /* The periodogram is like the Welch method but for noverlap = 0 */
+    opts periodogramOpts = *welchOpts;
+    periodogramOpts.noverlap = 0;
+    welch(data, freqs, power, N, &periodogramOpts);
+}
+
 int main() {
     /* Open file */
     const char *filename = "sdr_iq_data_0G433000_60dB-20210505_184759.iqdat";
@@ -263,14 +282,13 @@ int main() {
     double *datad = malloc(samples*sizeof(double));
     for (int i = 0; i < samples; i++) {
         datad[i] = (double)data[i];
-        printf("%lf\n", datad[i]);
     }
     int nperseg = 2048;
     double *freqs;
     double *power = calloc(nperseg, sizeof(*power));
     bool *signal_presence = malloc(samples/2 * sizeof(bool));
     opts wopts = {1.0, 1, nperseg, 1024, nperseg, true, 1, 1, MEAN};
-    welch(datad, freqs, power, samples, &wopts);
+    periodogram(datad, freqs, power, samples, &wopts);
     double noise_power = noise_power_aic(power, samples, &wopts);
     printf("Estimated noise power = %lf\n", noise_power);
     energy_detector(datad, signal_presence, samples, noise_power, 0.05, 4096);
