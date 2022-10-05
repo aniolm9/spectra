@@ -55,8 +55,26 @@ static int compute_num_frames(int N, opts *spectralOpts) {
     int nstep = nperseg - noverlap;
     N = N/2;
     int num_frames = N / nstep + (N % nstep != 0) - 1;
-    printf("%d\n", num_frames);
     return num_frames;
+}
+
+/**
+ * Compute the Discrete Fourier Transform (DFT) sample frequencies.
+ *
+ * @param freqs Output array containing the sample frequencies.
+ * @param M Window length (in general, nfft or nperseg).
+ * @param ts Inverse of the sampling frequency.
+ */
+void fftfreq(double *freqs, int M, float ts) {
+    int i;
+    int cut_index = (int)((M-1)/2) + 1;
+    for (i = 0; i < cut_index; i++) {
+        freqs[i] = i/(ts*M);
+    }
+    freqs[cut_index] = (-M/2)/(ts*M);
+    for (i = cut_index + 1; i < M; i++) {
+        freqs[i] = freqs[i-1] + 1/(ts*M);
+    }
 }
 
 /**
@@ -105,6 +123,8 @@ static void spectral_helper(double *data_x, double *data_y, double *freqs, doubl
                 psd[k][j] = powVal;
             }
         }
+        /* Compute the frequency values */
+        fftfreq(freqs, spectralOpts->nfft, 1/spectralOpts->fs);
         /* Last frame may be smaller if it is not padded, thus we ignore it
         * TODO: implement a padding to avoid ignoring it.
         **/

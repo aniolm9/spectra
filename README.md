@@ -33,6 +33,7 @@ Here there is a list of some features that I know that are missing:
 * [ ] Support for real FFT (input data type must be checked).
 * [ ] Padding support to avoid discarding the last frame if it it smaller.
 * [ ] Support for Cross Spectral Density (CSD) estimation.
+* [ ] Support for median averaging in the Welch's method.
 
 ### Contributing
 If you find a bug or you would like to suggest a new feature, feel free to open an issue.
