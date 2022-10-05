@@ -13,6 +13,7 @@ void new_opts() {
     /* Some comments about the input parameters:
      * nfft < nperseg => error
      * noverlap >= nperseg => error
+     * nperseg = N => We must take nperseg=2^k < N
     **/
 }
 
@@ -48,12 +49,13 @@ static void IQ2fftcpx(double *iq, kiss_fft_cpx *cpx, int N) {
  * @return The number of frames in which the data array is divided.
  */
 static int compute_num_frames(int N, opts *spectralOpts) {
-    /* TODO: support padding. One -1 will go away if we pad */
+    /* TODO: support padding. The -1 will go away if we pad */
     int nperseg = spectralOpts->nperseg;
     int noverlap = spectralOpts->noverlap;
     int nstep = nperseg - noverlap;
     N = N/2;
-    int num_frames = N / nstep + (N % nstep != 0) - 1 - 1;
+    int num_frames = N / nstep + (N % nstep != 0) - 1;
+    printf("%d\n", num_frames);
     return num_frames;
 }
 
@@ -249,7 +251,8 @@ void welch(double *data, double *freqs, double *power, int N, opts *welchOpts) {
 }
 
 /**
- * Estimate power spectral density using a periodogram.
+ * Estimate power spectral density using a periodogram. This implementation
+ * performs a temporal average. This could be avoided by setting nperseg=N.
  *
  * @param data Input array with the data samples (as doubles).
  * @param freqs Output array containing the sample frequencies.
@@ -264,37 +267,4 @@ void periodogram(double *data, double *freqs, double *power, int N, opts *welchO
     opts periodogramOpts = *welchOpts;
     periodogramOpts.noverlap = 0;
     welch(data, freqs, power, N, &periodogramOpts);
-}
-
-int main() {
-    /* Open file */
-    const char *filename = "sdr_iq_data_0G433000_60dB-20210505_184759.iqdat";
-    FILE *fp = fopen(filename, "rb");
-    /* Get filesize and allocate memory */
-    fseek(fp, 0, SEEK_END);
-    size_t size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    printf("FILE SIZE: %lu\n", (unsigned long)size);
-    int16_t *data = malloc(size);
-    int samples = size / 2;
-    /* Read bytes */
-    fread(data, size, 1, fp);
-    double *datad = malloc(samples*sizeof(double));
-    for (int i = 0; i < samples; i++) {
-        datad[i] = (double)data[i];
-    }
-    int nperseg = 2048;
-    double *freqs;
-    double *power = calloc(nperseg, sizeof(*power));
-    bool *signal_presence = malloc(samples/2 * sizeof(bool));
-    opts wopts = {1.0, 1, nperseg, 1024, nperseg, true, 1, 1, MEAN};
-    periodogram(datad, freqs, power, samples, &wopts);
-    double noise_power = noise_power_aic(power, samples, &wopts);
-    printf("Estimated noise power = %lf\n", noise_power);
-    energy_detector(datad, signal_presence, samples, noise_power, 0.05, 4096);
-    /* Free memory */
-    fclose(fp);
-    free(data);
-    free(power);
-    free(signal_presence);
 }
