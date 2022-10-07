@@ -6,9 +6,15 @@
 #include "spectrum.h"
 #include "windows.h"
 
-int main() {
+int main(int argc, char **argv) {
     /* Open file */
-    const char *filename = "sdr_iq_data_0G433000_60dB-20210505_184759.iqdat";
+    char *filename;
+    if (argc >= 2) {
+        filename = argv[1];
+    } else {
+        fprintf(stderr, "error opening file\n");
+        return -1;
+    }
     FILE *fp = fopen(filename, "rb");
     /* Get filesize and allocate memory */
     fseek(fp, 0, SEEK_END);
