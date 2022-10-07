@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
-#include <kissfft/kiss_fft.h>
+#include "kissfft/kiss_fft.h"
 #include <gsl/gsl_cdf.h>
 #include "spectrum.h"
 #include "windows.h"

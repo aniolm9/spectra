@@ -1,6 +1,3 @@
-# include directories
-include_directories(${SPECTRUM_SOURCE_DIR}/include)
-
 # add executables
 add_executable(detect_signal_aic_ed detect_signal_aic_ed.c)
 target_link_libraries(detect_signal_aic_ed spectrum)

@@ -2,3 +2,5 @@
 *.o
 *.iqdat
 build/
+lib/lib*
+include/kissfft/
