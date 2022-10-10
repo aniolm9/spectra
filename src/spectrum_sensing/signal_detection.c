@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <stdbool.h>
-#include <math.h>
 #include <kissfft/kiss_fft.h>
 #include <gsl/gsl_cdf.h>
 #include "opts.h"

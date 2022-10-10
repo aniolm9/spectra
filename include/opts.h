@@ -1,3 +1,6 @@
+#define MEAN 1
+#define MEDIAN 2
+
 typedef struct opts {
     float fs;       /* Sampling frequency of the data. */
     int window;     /* Type of window. See windows.h for the available options. */

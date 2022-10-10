@@ -1,15 +1,11 @@
-#include <stdlib.h>
 #include <stdio.h>
-#include <stdbool.h>
 #include <stdint.h>
-#include <string.h>
-#include <math.h>
+#include <stdbool.h>
 #include <kissfft/kiss_fft.h>
-#include <gsl/gsl_cdf.h>
 #include "opts.h"
-#include "windows.h"
+#include "tools.h"
 #include "spectral_common.h"
-#include "spectrum.h"
+#include "periodogram_methods.h"
 
 /**
  * Estimate power spectral density using Welch's method. The method consists in splitting

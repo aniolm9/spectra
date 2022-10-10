@@ -1,12 +1,11 @@
-#include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <kissfft/kiss_fft.h>
 #include "opts.h"
-#include "noise_power_est.h"
-#include "spectrum.h"
 #include "windows.h"
+#include "periodogram_methods.h"
+#include "noise_power_est.h"
 #include "signal_detection.h"
 
 int main(int argc, char **argv) {
@@ -36,7 +35,7 @@ int main(int argc, char **argv) {
     double *freqs = calloc(nperseg, sizeof(*freqs));;
     double *power = calloc(nperseg, sizeof(*power));
     bool *signal_presence = malloc(samples/2 * sizeof(bool));
-    opts wopts = {1.0, 1, nperseg, 1024, nperseg, true, 1, 1, MEAN};
+    opts wopts = {1.0, HANN, nperseg, 1024, nperseg, true, 1, 1, MEAN};
     welch(datad, freqs, power, samples, &wopts);
     double noise_power = noise_power_aic(power, samples, &wopts);
     printf("Estimated noise power = %lf\n", noise_power);

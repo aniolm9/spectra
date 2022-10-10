@@ -1,6 +1,5 @@
-#include <stdbool.h>
 #include <stdint.h>
-#include <math.h>
+#include <stdbool.h>
 #include <kissfft/kiss_fft.h>
 #include "opts.h"
 #include "tools.h"
