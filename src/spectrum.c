@@ -6,6 +6,7 @@
 #include <math.h>
 #include <kissfft/kiss_fft.h>
 #include <gsl/gsl_cdf.h>
+#include "opts.h"
 #include "spectrum.h"
 #include "windows.h"
 
@@ -31,7 +32,7 @@ static void check_welch_opts(opts *welchOpts) {
  * @param cpx Output array as kiss_fft_cpx scalars.
  * @param N Number of samples in the input array.
  */
-static void IQ2fftcpx(double *iq, kiss_fft_cpx *cpx, int N) {
+void IQ2fftcpx(double *iq, kiss_fft_cpx *cpx, int N) {
     int k = 0;
     for (int j = 0; j < N; j+=2) {
         cpx[k].r = iq[j];
@@ -48,7 +49,7 @@ static void IQ2fftcpx(double *iq, kiss_fft_cpx *cpx, int N) {
  * @param welchOpts Struct containing the internal settings of the estimators.
  * @return The number of frames in which the data array is divided.
  */
-static int compute_num_frames(int N, opts *spectralOpts) {
+int compute_num_frames(int N, opts *spectralOpts) {
     /* TODO: support padding. The -1 will go away if we pad */
     int nperseg = spectralOpts->nperseg;
     int noverlap = spectralOpts->noverlap;
@@ -136,61 +137,6 @@ static void spectral_helper(double *data_x, double *data_y, double *freqs, doubl
         free(data_cpx);
         kiss_fft_free(cfg);
     }
-}
-
-/**
- * Compare two akaike structs.
- *
- * @param a First akaike struct.
- * @param b Second akaike struct.
- * @return -1 if the value of a is greater than that of b, 1 if smaller, 0 otherwise.
- */
-static int cmp_akaike(const void *a, const void *b) {
-    akaike *a1 = (akaike *)a;
-    akaike *a2 = (akaike *)b;
-    if ((*a1).value > (*a2).value)
-        return -1;
-    else if ((*a1).value < (*a2).value)
-        return 1;
-    else
-        return 0;
-}
-
-/**
- * Estimate the noise power of a signal using the Akaike Information Criterion (AIC).
- *
- * @param psd Output matrix where each row is a frame and each column a sample.
- * @param N Number of samples in data.
- * @param welchOpts Struct containing the internal settings of the estimators.
- * @return A double with the noise power estimate.
- */
-double noise_power_aic(const double *psd, int N, opts *welchOpts) {
-    int nperseg = welchOpts->nperseg;
-    int num_frames = compute_num_frames(N, welchOpts);
-    akaike *aic = calloc(nperseg, sizeof(*aic));
-    /* Compute Akaike Information Criterion (AIC) */
-    double powSum;
-    double powProduct;
-    double aic_n;
-    for (int k = 0; k < nperseg; k++) {
-        powSum = 0.0;
-        powProduct = 1.0;
-        for (int i=k; i < nperseg; i++) {
-            powSum += psd[i] / (nperseg-k);
-            powProduct *= pow(psd[i], 1.0/(nperseg-k));
-        }
-        aic_n = (nperseg-k)*num_frames*log(powSum/powProduct)+k*(2*nperseg-k);
-        aic[k].index = k;
-        aic[k].value = (int32_t)aic_n;
-    }
-    /* Sort the AIC array and find the index of the minimum value */
-    qsort(aic, nperseg, sizeof(akaike), cmp_akaike);
-    int kmin = aic[nperseg-1].index;
-    double noise_power = 0.0;
-    for (int i = kmin; i < nperseg; i++) {
-        noise_power += psd[i]/(nperseg-kmin);
-    }
-    return noise_power;
 }
 
 /**

@@ -1,4 +1,4 @@
-/* Typed of window */
+/* Types of window */
 #define RECTANGULAR 0
 #define HANN 1
 #define HAMMING 2

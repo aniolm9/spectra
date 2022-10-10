@@ -1,5 +1,5 @@
 # set sources
-set(SPECTRUM_SOURCES spectrum.c windows.c)
+file(GLOB_RECURSE SPECTRUM_SOURCES "*.c")
 
 # set libraries
 set(SPECTRUM_LIBS m ${KISSFFT_LIB} gsl gslcblas)

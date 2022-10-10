@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <kissfft/kiss_fft.h>
+#include "opts.h"
+#include "noise_power_est.h"
 #include "spectrum.h"
 #include "windows.h"
 
