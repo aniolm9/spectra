@@ -3,7 +3,6 @@
 #include <math.h>
 #include <kissfft/kiss_fft.h>
 #include "opts.h"
-#include "spectrum.h"
 #include "tools.h"
 #include "noise_power_est.h"
 
