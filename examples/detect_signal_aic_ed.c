@@ -7,6 +7,7 @@
 #include "noise_power_est.h"
 #include "spectrum.h"
 #include "windows.h"
+#include "signal_detection.h"
 
 int main(int argc, char **argv) {
     /* Open file */

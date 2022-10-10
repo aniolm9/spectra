@@ -1,11 +1,7 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <string.h>
 #include <math.h>
 #include <kissfft/kiss_fft.h>
-#include <gsl/gsl_cdf.h>
 #include "opts.h"
 #include "spectrum.h"
 #include "tools.h"
