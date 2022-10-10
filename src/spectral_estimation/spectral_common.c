@@ -1,0 +1,103 @@
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <math.h>
+#include <kissfft/kiss_fft.h>
+#include "opts.h"
+#include "tools.h"
+#include "windows.h"
+#include "spectral_common.h"
+
+void new_spectral_opts() {
+    /* Some comments about the input parameters:
+     * nfft < nperseg => error
+     * noverlap >= nperseg => error
+     * nperseg = N => We must take nperseg=2^k < N
+    **/
+}
+
+void check_spectral_opts(opts *spectralOpts) {
+    if (!spectralOpts) {
+
+    }
+}
+
+/**
+ * Compute the Discrete Fourier Transform (DFT) sample frequencies.
+ *
+ * @param freqs Output array containing the sample frequencies.
+ * @param M Window length (in general, nfft or nperseg).
+ * @param ts Inverse of the sampling frequency.
+ */
+void fftfreq(double *freqs, int M, float ts) {
+    int i;
+    int cut_index = (int)((M-1)/2) + 1;
+    for (i = 0; i < cut_index; i++) {
+        freqs[i] = i/(ts*M);
+    }
+    freqs[cut_index] = (-M/2)/(ts*M);
+    for (i = cut_index + 1; i < M; i++) {
+        freqs[i] = freqs[i-1] + 1/(ts*M);
+    }
+}
+
+/**
+ * Helper function that can be used in different spectral estimation tools, such as
+ * the periodogram or the averaged periodogram.
+ *
+ * @param data_x First input data array (as doubles).
+ * @param data_y Second input data array (as doubles).
+ * @param freqs Output array containing the sample frequencies.
+ * @param psd Output matrix where each row is a frame and each column a sample.
+ * @param N_x Number of samples in data_x.
+ * @param N_y Number of samples in data_y.
+ * @param spectralOpts Struct containing the internal settings of the estimators.
+ */
+void spectral_helper(double *data_x, double *data_y, double *freqs, double **psd, int N_x, int N_y, opts *spectralOpts) {
+    /* TODO: We do not support cross power spectral density estimations yet */
+    if (data_x != data_y) {
+        fprintf(stderr, "different input arrays not supported\n");
+    } else {
+        int nperseg = spectralOpts->nperseg;
+        int noverlap = spectralOpts->noverlap;
+        int nstep = nperseg - noverlap;
+        kiss_fft_cfg cfg = kiss_fft_alloc(spectralOpts->nfft, 0, 0, 0);
+        kiss_fft_cpx *in = (kiss_fft_cpx*) malloc(sizeof(kiss_fft_cpx) * spectralOpts->nfft);
+        kiss_fft_cpx *out = (kiss_fft_cpx*) malloc(sizeof(kiss_fft_cpx) * spectralOpts->nfft);
+        kiss_fft_cpx *data_cpx = (kiss_fft_cpx*) malloc(sizeof(kiss_fft_cpx) * N_x/2);
+        /* TODO: check if data is complex or not */
+        IQ2fftcpx(data_x, data_cpx, N_x);
+        int N = N_x/2;
+        int num_frames = N / nstep + (N % nstep != 0) - 1 - 1;
+        kiss_fft_cpx *frame = malloc(nperseg * sizeof(kiss_fft_cpx));
+        kiss_fft_cpx *windowed_frame = malloc(nperseg * sizeof(kiss_fft_cpx));
+        double powVal;
+        int k;
+        for (k = 0; k < num_frames; k++) {
+            /* Create a frame of size nperseg with nstep new samples */
+            memcpy(frame, data_cpx+k*nstep, nperseg*sizeof(kiss_fft_cpx));
+            /* Apply a window */
+            kiss_fft_scalar scale = windowing(frame, windowed_frame, nperseg, spectralOpts->window, spectralOpts->fs, spectralOpts->scaling);
+            /* Copy the windowed frame into a new array and compute the FFT */
+            memcpy(in, windowed_frame, nperseg*sizeof(kiss_fft_cpx));
+            kiss_fft(cfg, in, out);
+            /* Compute PSD */
+            for (int j = 0; j < nperseg; j++) {
+                powVal = (out[j].r*out[j].r + out[j].i*out[j].i) * scale;
+                psd[k][j] = powVal;
+            }
+        }
+        /* Compute the frequency values */
+        fftfreq(freqs, spectralOpts->nfft, 1/spectralOpts->fs);
+        /* Last frame may be smaller if it is not padded, thus we ignore it
+        * TODO: implement a padding to avoid ignoring it.
+        **/
+        /* Free memory */
+        free(in);
+        free(out);
+        free(frame);
+        free(windowed_frame);
+        free(data_cpx);
+        kiss_fft_free(cfg);
+    }
+}
