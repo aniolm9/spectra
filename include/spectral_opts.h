@@ -12,3 +12,6 @@ typedef struct spectralOpts {
     int scaling;    /* Compute the PSD (V^2/Hz) or the spectrum (V^2) if data is measured in V and fs in Hz. */
     int average;    /* Method to use when averaging periodograms (mean or median). */
 } spectralOpts;
+
+spectralOpts new_spectral_opts_basic(int window, int nperseg, int scaling);
+void check_spectral_opts(spectralOpts spectralOpts);

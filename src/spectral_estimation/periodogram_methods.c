@@ -19,8 +19,8 @@
  * @param welchOpts Struct containing the internal settings of the estimators.
  */
 void welch(double *data, double *freqs, double *power, int N, spectralOpts *welchOpts) {
-    /* TODO: check welch options */
-    //check_welch_opts(welchOpts);
+    /* Check the options passed by the user */
+    check_spectral_opts(*welchOpts);
     /* Declare some useful variables from the welchOpts struct */
     int nperseg = welchOpts->nperseg;
     int num_frames = compute_num_frames(N, welchOpts);
@@ -36,6 +36,7 @@ void welch(double *data, double *freqs, double *power, int N, spectralOpts *welc
     switch (average) {
         case MEDIAN:
             fprintf(stderr, "median averaging method not supported\n");
+            exit(EXIT_FAILURE);
             break;
         
         default:
@@ -67,8 +68,6 @@ void welch(double *data, double *freqs, double *power, int N, spectralOpts *welc
  * @param welchOpts Struct containing the internal settings of the estimators.
  */
 void periodogram(double *data, double *freqs, double *power, int N, spectralOpts *welchOpts) {
-    /* TODO: check welch options */
-    //check_welch_opts(welchOpts);
     /* The periodogram is like the Welch method but for noverlap = 0 */
     spectralOpts periodogramOpts = *welchOpts;
     periodogramOpts.noverlap = 0;

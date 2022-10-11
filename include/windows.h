@@ -4,6 +4,8 @@
 #define HAMMING 2
 #define BLACKMAN 3
 
+#define MAX_WINDOW 3
+
 /* Scaling methods */
 #define DENSITY 1
 #define SPECTRUM 2

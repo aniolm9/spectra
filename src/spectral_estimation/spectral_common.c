@@ -7,20 +7,6 @@
 #include "windows.h"
 #include "spectral_common.h"
 
-void new_spectral_opts_basic() {
-    /* Some comments about the input parameters:
-     * nfft < nperseg => error
-     * noverlap >= nperseg => error
-     * nperseg = N => We must take nperseg=2^k < N
-    **/
-}
-
-void check_spectral_opts(spectralOpts *spectralOpts) {
-    if (!spectralOpts) {
-
-    }
-}
-
 /**
  * Compute the Discrete Fourier Transform (DFT) sample frequencies.
  *
@@ -56,6 +42,7 @@ void spectral_helper(double *data_x, double *data_y, double *freqs, double **psd
     /* TODO: We do not support cross power spectral density estimations yet */
     if (data_x != data_y) {
         fprintf(stderr, "different input arrays not supported\n");
+        exit(EXIT_FAILURE);
     } else {
         int nperseg = spectralOpts->nperseg;
         int noverlap = spectralOpts->noverlap;

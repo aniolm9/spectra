@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
         filename = argv[1];
     } else {
         fprintf(stderr, "error opening file\n");
-        return -1;
+        exit(EXIT_FAILURE);
     }
     FILE *fp = fopen(filename, "rb");
     /* Get filesize and allocate memory */
@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     double *freqs = calloc(nperseg, sizeof(*freqs));;
     double *power = calloc(nperseg, sizeof(*power));
     bool *signal_presence = malloc(samples/2 * sizeof(bool));
-    spectralOpts wopts = {1.0, HANN, nperseg, 1024, nperseg, true, 1, 1, MEAN};
+    spectralOpts wopts = new_spectral_opts_basic(HANN, nperseg, DENSITY);
     welch(datad, freqs, power, samples, &wopts);
     double noise_power = noise_power_aic(power, samples, &wopts);
     printf("Estimated noise power = %lf\n", noise_power);

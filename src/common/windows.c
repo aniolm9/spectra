@@ -77,7 +77,7 @@ kiss_fft_scalar windowing(const kiss_fft_cpx *data, kiss_fft_cpx *output, int M,
                 break;
             default:
                 fprintf(stderr, "invalid window\n");
-                break;
+                exit(EXIT_FAILURE);
         }
     }
     if (scaling == DENSITY) {
@@ -86,6 +86,6 @@ kiss_fft_scalar windowing(const kiss_fft_cpx *data, kiss_fft_cpx *output, int M,
         return 1.0 / (scale_spectrum * scale_spectrum);
     } else {
         fprintf(stderr, "invalid scaling method\n");
-        return -1;
+        exit(EXIT_FAILURE);
     }
 }
