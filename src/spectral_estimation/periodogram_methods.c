@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <kissfft/kiss_fft.h>
-#include "opts.h"
+#include "spectral_opts.h"
 #include "tools.h"
 #include "spectral_common.h"
 #include "periodogram_methods.h"
@@ -18,7 +18,7 @@
  * @param N Number of samples in data.
  * @param welchOpts Struct containing the internal settings of the estimators.
  */
-void welch(double *data, double *freqs, double *power, int N, opts *welchOpts) {
+void welch(double *data, double *freqs, double *power, int N, spectralOpts *welchOpts) {
     /* TODO: check welch options */
     //check_welch_opts(welchOpts);
     /* Declare some useful variables from the welchOpts struct */
@@ -66,11 +66,11 @@ void welch(double *data, double *freqs, double *power, int N, opts *welchOpts) {
  * @param N Number of samples in data.
  * @param welchOpts Struct containing the internal settings of the estimators.
  */
-void periodogram(double *data, double *freqs, double *power, int N, opts *welchOpts) {
+void periodogram(double *data, double *freqs, double *power, int N, spectralOpts *welchOpts) {
     /* TODO: check welch options */
     //check_welch_opts(welchOpts);
     /* The periodogram is like the Welch method but for noverlap = 0 */
-    opts periodogramOpts = *welchOpts;
+    spectralOpts periodogramOpts = *welchOpts;
     periodogramOpts.noverlap = 0;
     welch(data, freqs, power, N, &periodogramOpts);
 }

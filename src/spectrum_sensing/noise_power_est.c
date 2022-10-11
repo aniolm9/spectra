@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <kissfft/kiss_fft.h>
-#include "opts.h"
+#include "spectral_opts.h"
 #include "tools.h"
 #include "noise_power_est.h"
 
@@ -13,7 +13,7 @@
  * @param welchOpts Struct containing the internal settings of the estimators.
  * @return A double with the noise power estimate.
  */
-double noise_power_aic(const double *psd, int N, opts *welchOpts) {
+double noise_power_aic(const double *psd, int N, spectralOpts *welchOpts) {
     int nperseg = welchOpts->nperseg;
     int num_frames = compute_num_frames(N, welchOpts);
     akaike *aic = calloc(nperseg, sizeof(*aic));

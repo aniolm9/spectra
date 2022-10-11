@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <kissfft/kiss_fft.h>
-#include "opts.h"
+#include "spectral_opts.h"
 #include "tools.h"
 
 /**
@@ -29,7 +29,7 @@ void IQ2fftcpx(double *iq, kiss_fft_cpx *cpx, int N) {
  * @param welchOpts Struct containing the internal settings of the estimators.
  * @return The number of frames in which the data array is divided.
  */
-int compute_num_frames(int N, opts *spectralOpts) {
+int compute_num_frames(int N, spectralOpts *spectralOpts) {
     /* TODO: support padding. The -1 will go away if we pad */
     int nperseg = spectralOpts->nperseg;
     int noverlap = spectralOpts->noverlap;

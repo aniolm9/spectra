@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <kissfft/kiss_fft.h>
 #include <gsl/gsl_cdf.h>
-#include "opts.h"
+#include "spectral_opts.h"
 #include "tools.h"
 #include "signal_detection.h"
 

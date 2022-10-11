@@ -2,12 +2,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <kissfft/kiss_fft.h>
-#include "opts.h"
+#include "spectral_opts.h"
 #include "tools.h"
 #include "windows.h"
 #include "spectral_common.h"
 
-void new_spectral_opts() {
+void new_spectral_opts_basic() {
     /* Some comments about the input parameters:
      * nfft < nperseg => error
      * noverlap >= nperseg => error
@@ -15,7 +15,7 @@ void new_spectral_opts() {
     **/
 }
 
-void check_spectral_opts(opts *spectralOpts) {
+void check_spectral_opts(spectralOpts *spectralOpts) {
     if (!spectralOpts) {
 
     }
@@ -52,7 +52,7 @@ void fftfreq(double *freqs, int M, float ts) {
  * @param N_y Number of samples in data_y.
  * @param spectralOpts Struct containing the internal settings of the estimators.
  */
-void spectral_helper(double *data_x, double *data_y, double *freqs, double **psd, int N_x, int N_y, opts *spectralOpts) {
+void spectral_helper(double *data_x, double *data_y, double *freqs, double **psd, int N_x, int N_y, spectralOpts *spectralOpts) {
     /* TODO: We do not support cross power spectral density estimations yet */
     if (data_x != data_y) {
         fprintf(stderr, "different input arrays not supported\n");
