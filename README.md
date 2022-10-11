@@ -10,7 +10,7 @@ the source code structure of this part is very similar to that of SciPy.
 
 I started developing this library while working on a project funded by the
 [European Space Agency (ESA)](https://www.esa.int/) at
-[Dapcom Data Services](https://www.dapcom.es/).
+[Dapcom Data Services](https://www.dapcom.es/) (ESA Contract No. 4000137290) .
 
 ## Project information
 ### Features
