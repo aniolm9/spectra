@@ -1,7 +1,7 @@
 # minimum cmake version
 cmake_minimum_required(VERSION 3.10)
 
-# project namne
+# project name
 project(SPECTRUM LANGUAGES C VERSION 0.1)
 
 # set compiler flags, mainly optimization
