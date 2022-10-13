@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2022 Aniol Martí
+ *
+ * Redistribution and use in source and binary forms,
+ * with or without modification, are permitted under the
+ * terms of the BSD 3-clause license.
+ *
+ * The software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * BSD 3-clause license for more details.
+ *
+ * You should have received a copy of the BSD 3-clause license
+ * along with the software. If not, see <https://opensource.org/licenses/BSD-3-Clause>.
+ */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -8,6 +24,11 @@
 #include "noise_power_est.h"
 #include "signal_detection.h"
 
+/**
+ * This example opens a file passed as an argument, computes its PSD
+ * using Welch's method, estimates the noise power using the AIC and
+ * finally it detects signal presence with an energy detector.
+ */
 int main(int argc, char **argv) {
     /* Open file */
     char *filename;
@@ -32,7 +53,7 @@ int main(int argc, char **argv) {
         datad[i] = (double)data[i];
     }
     int nperseg = 2048;
-    double *freqs = calloc(nperseg, sizeof(*freqs));;
+    double *freqs = calloc(nperseg, sizeof(*freqs));
     double *power = calloc(nperseg, sizeof(*power));
     bool *signal_presence = malloc(samples/2 * sizeof(bool));
     spectralOpts wopts = new_spectral_opts_basic(HANN, nperseg, DENSITY);
