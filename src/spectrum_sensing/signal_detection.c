@@ -26,7 +26,7 @@
  * Detects signal presence based on a classical energy detector.
  *
  * @param data Input array with the data samples (as doubles).
- * @param signal_presense Output array with "true" in the positions where a signal is detected.
+ * @param signal_presence Output array with "true" in the positions where a signal is detected.
  * @param N Number of samples in data.
  * @param noise_power Power of the noise.
  * @param Pfa Probability of false alarm.
