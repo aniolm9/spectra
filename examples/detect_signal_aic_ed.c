@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
     double *freqs = calloc(nperseg, sizeof(*freqs));
     double *power = calloc(nperseg, sizeof(*power));
     bool *signal_presence = malloc(samples/2 * sizeof(bool));
-    spectralOpts wopts = new_spectral_opts_basic(HANN, nperseg, DENSITY);
+    spectralOpts wopts = new_spectral_opts_basic(samples, HANN, nperseg, DENSITY);
     welch(datad, freqs, power, samples, &wopts);
     double noise_power = noise_power_aic(power, samples, &wopts);
     printf("Estimated noise power = %lf\n", noise_power);

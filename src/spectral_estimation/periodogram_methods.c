@@ -19,7 +19,6 @@
 #include <stdbool.h>
 #include <kissfft/kiss_fft.h>
 #include "spectral_opts.h"
-#include "tools.h"
 #include "spectral_common.h"
 #include "periodogram_methods.h"
 
@@ -39,7 +38,7 @@ void welch(double *data, double *freqs, double *power, int N, spectralOpts *welc
     check_spectral_opts(*welchOpts);
     /* Declare some useful variables from the welchOpts struct */
     int nperseg = welchOpts->nperseg;
-    int num_frames = compute_num_frames(N, welchOpts);
+    int num_frames = welchOpts->nframes;
     int average = welchOpts->average;
     /* Allocate a 2-D array for the PSD */
     double **psd = (double **) malloc(num_frames * sizeof(double*));

@@ -69,8 +69,7 @@ void spectral_helper(double *data_x, double *data_y, double *freqs, double **psd
         kiss_fft_cpx *data_cpx = (kiss_fft_cpx*) malloc(sizeof(kiss_fft_cpx) * N_x/2);
         /* TODO: check if data is complex or not */
         IQ2fftcpx(data_x, data_cpx, N_x);
-        int N = N_x/2;
-        int num_frames = N / nstep + (N % nstep != 0) - 1 - 1;
+        int num_frames = spectralOpts->nframes;
         kiss_fft_cpx *frame = malloc(nperseg * sizeof(kiss_fft_cpx));
         kiss_fft_cpx *windowed_frame = malloc(nperseg * sizeof(kiss_fft_cpx));
         double powVal;

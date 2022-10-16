@@ -19,29 +19,48 @@
 #include <stdbool.h>
 #include <kissfft/kiss_fft.h>
 #include "spectral_opts.h"
-#include "tools.h"
 #include "windows.h"
+
+/**
+ * Compute the number of frames in which the data array is divided. It uses
+ * the total number of samples, the frame length and the number of overlapping samples.
+ *
+ * @param N Number of samples in data.
+ * @param nperseg Number of samples per segment.
+ * @param noverlap Number of overlapping samples between segments.
+ * @return The number of frames in which the data array is divided.
+ */
+int compute_num_frames(int N, int nperseg, int noverlap) {
+    /* TODO: support padding. The -1 will go away if we pad */
+    int nstep = nperseg - noverlap;
+    N = N/2;
+    int num_frames = N / nstep + (N % nstep != 0) - 1;
+    return num_frames;
+}
 
 /**
  * Create a new spectralOpts struct with the options passed
  * by the user. This function only accepts some basic tuning.
  *
+ * @param N Number of samples in data.
  * @param window Type of the window.
  * @param nperseg Number of samples per segment.
  * @param scaling Type of scaling: PSD or spectrum.
  * @return A spectralOpts struct.
  */
-spectralOpts new_spectral_opts_basic(int window, int nperseg, int scaling) {
+spectralOpts new_spectral_opts_basic(int N, int window, int nperseg, int scaling) {
     /* Some comments about the input parameters:
      * nperseg = N => We must take nperseg=2^k < N
      */
+    nperseg = nperseg < N ? nperseg : N-1;
     spectralOpts opts = {(float)1.0,
                          window,
                          nperseg,
                          nperseg/2,
                          nperseg,
+                         compute_num_frames(N, nperseg, nperseg/2),
                          true,
-                         1,
+                         2,
                          scaling,
                          MEAN};
     check_spectral_opts(opts);

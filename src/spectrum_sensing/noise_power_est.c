@@ -31,7 +31,7 @@
  */
 double noise_power_aic(const double *psd, int N, spectralOpts *welchOpts) {
     int nperseg = welchOpts->nperseg;
-    int num_frames = compute_num_frames(N, welchOpts);
+    int num_frames = welchOpts->nframes;
     akaike *aic = calloc(nperseg, sizeof(*aic));
     /* Compute Akaike Information Criterion (AIC) */
     double powSum;
