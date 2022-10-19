@@ -20,17 +20,41 @@
     #define MEAN 1
     #define MEDIAN 2
 
+    /** @struct spectralOpts
+     *  Struct with the options for the spectral estimators.
+     *
+     *  @var spectralOpts::fs
+     *    Samplig frequency.
+     *  @var spectralOpts::window
+     *    Window type. See windows.h for the available types.
+     *  @var spectralOpts::nperseg
+     *    Length of each segment.
+     *  @var spectralOpts::noverlap
+     *    Number of points to overlap between segments.
+     *  @var spectralOpts::nfft
+     *    Length of the FFT used.
+     *  @var spectralOpts::nframes
+     *    Number of frames. It is automatically computed if new_spectral_opts_basic() is used.
+     *  @var spectralOpts::isComplex
+     *    Real or complex input sequence?
+     *  @var spectralOpts::sides
+     *    Sides of the FFT for real data (1 or 2). For complex data this parameter is not taken into account.
+     *  @var spectralOpts::scaling
+     *    Compute the PSD (V^2/Hz) or the spectrum (V^2) if data is measured in V and fs in Hz.
+     *  @var spectralOpts::average
+     *    Method to use when averaging periodograms (mean or median).
+     */
     typedef struct spectralOpts {
-        float fs;       /* Sampling frequency of the data. */
-        int window;     /* Type of window. See windows.h for the available options. */
-        int nperseg;    /* Length of each segment. */
-        int noverlap;   /* Number of points to overlap between segments. */
-        int nfft;       /* Length of the FFT used. */
-        int nframes;    /* Number of frames. */
-        bool isComplex; /* Real or complex input sequence? */
-        int sides;      /* Sides of the FFT for real data (1 or 2). For complex data this parameter is not taken into account. */
-        int scaling;    /* Compute the PSD (V^2/Hz) or the spectrum (V^2) if data is measured in V and fs in Hz. */
-        int average;    /* Method to use when averaging periodograms (mean or median). */
+        float fs;
+        int window;
+        int nperseg;
+        int noverlap;
+        int nfft;
+        int nframes;
+        bool isComplex;
+        int sides;
+        int scaling;
+        int average;
     } spectralOpts;
 
     int compute_num_frames(int N, int nperseg, int noverlap);

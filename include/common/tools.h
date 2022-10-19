@@ -16,6 +16,14 @@
 
 #ifndef TOOLS_H
 #define TOOLS_H
+    /** @struct akaike
+     *  Struct for the pairs of AIC values and index.
+     *
+     *  @var akaike::value
+     *    Value of the AIC for a given index.
+     *  @var akaike::index
+     *    The index of the AIC value.
+     */
     typedef struct {
         int32_t value;
         uint16_t index;
