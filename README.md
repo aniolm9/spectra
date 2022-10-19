@@ -49,6 +49,11 @@ I would like to thank the [European Space Agency (ESA)](https://www.esa.int/) an
 the development of this library. I would also like to thank Jordi Portell
 for his contributions in the code.
 
+### License
+This project is licensed under the BSD 3-clause license.  
+The KissFFT library is also licensed under the BSD 3-clause license.  
+The GSL library (only used in the energy detector) is licensed under the GPL-3.
+
 ## Build
 The compilation of this project is managed by CMake. You can either build the library or
 the different examples provided.
