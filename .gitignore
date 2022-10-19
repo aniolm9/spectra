@@ -6,3 +6,4 @@ lib/lib*
 include/kissfft/
 .idea/
 cmake-build-debug/
+docs/
