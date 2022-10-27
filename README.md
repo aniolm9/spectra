@@ -82,3 +82,17 @@ The available target names are:
 * `spectrum`: builds the shared library.
 * `examples`: builds all the examples (and also the library).
 * `detect_signal_aic_ed`: builds only the example (and the library).
+
+## Troubleshooting
+### KISS FFT library not found
+```
+CMake Error: The following variables are used in this project, but they are set to NOTFOUND.
+Please set them or make sure they are set and tested correctly in the CMake files:
+KISSFFT_LIB
+    linked by target "spectrum"
+```
+1. Make sure that the library is installed or available in the `lib` project directory.
+2. CMake searches for `kissfft-float` and `kiss_fft_float` in the `lib` directory of the
+project and also in the system library path. On UNIX, make sure that the files `libkissfft-float.so`
+or `libkiss_fft_float.so` exist. They must not have the version number at the end.
+If they do, you can create a symlink.
