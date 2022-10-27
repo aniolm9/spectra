@@ -47,7 +47,10 @@ int main(int argc, char **argv) {
     int16_t *data = malloc(size);
     int samples = size / 2;
     /* Read bytes */
-    fread(data, size, 1, fp);
+    if (fread(data, size, 1, fp)*size != size) {
+        fprintf(stderr, "error reading file\n");
+        exit(EXIT_FAILURE);
+    }
     double *datad = malloc(samples*sizeof(double));
     for (int i = 0; i < samples; i++) {
         datad[i] = (double)data[i];
