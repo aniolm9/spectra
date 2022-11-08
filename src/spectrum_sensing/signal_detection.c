@@ -31,17 +31,36 @@
  * @param noise_power Power of the noise.
  * @param Pfa Probability of false alarm.
  * @param df Degrees of freedom.
+ * @param nstep Step size between energy windows, between 1 and df.
  */
-void energy_detector(double *data, bool *signal_presence, int N, double noise_power, float Pfa, int df) {
+void energy_detector(double *data, bool *signal_presence, int N, double noise_power, float Pfa, int df, int nstep) {
+    /* Check that 1 <= nstep <= df */
+    if (nstep > df) {
+        nstep = df;
+    } else if (nstep < 1) {
+        nstep = 1;
+    }
     kiss_fft_cpx *data_cpx = (kiss_fft_cpx*) malloc(sizeof(kiss_fft_cpx) * N/2);
     /* TODO: check if data is complex or not */
     IQ2fftcpx(data, data_cpx, N);
     N = N/2;
     double gamma = gsl_cdf_chisq_Qinv(Pfa, df) * noise_power;
     double energy;
-    for (int j = 0; j < N; j++) {
+    int j, k;
+    /* We decide signal presence in blocks of samples */
+    for (j = 0; j < N-nstep; j += nstep) {
         energy = 0.0;
-        for (int k = j; k < j+df; k++) {
+        for (k = j; k < j+df; k++) {
+            energy += data_cpx[k].r*data_cpx[k].r + data_cpx[k].i*data_cpx[k].i;
+        }
+        for (k = j; k < j+nstep; k++) {
+            signal_presence[k] = energy > gamma;
+        }
+    }
+    /* Detect the last samples */
+    for (; j < N; j++) {
+        energy = 0.0;
+        for (k = j; k < j+df; k++) {
             energy += data_cpx[k].r*data_cpx[k].r + data_cpx[k].i*data_cpx[k].i;
         }
         signal_presence[j] = energy > gamma;
