@@ -53,16 +53,17 @@ void welch(double *data, double *freqs, double *power, int N, spectralOpts *welc
             fprintf(stderr, "median averaging method not supported\n");
             exit(EXIT_FAILURE);
             break;
-        
-        default:
-            fprintf(stderr, "averaging method not supported, falling back to mean method\n");
-        
+
         case MEAN:
             for (int k = 0; k < num_frames; k++) {
                 for (int j = 0; j < nperseg; j++) {
                     power[j] += psd[k][j] / num_frames;
                 }
             }
+            break;
+
+        default:
+            fprintf(stderr, "averaging method not supported\n");
             break;
     }
     /* Free the PSD 2-D array */

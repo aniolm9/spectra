@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.0)
 project(SPECTRUM LANGUAGES C VERSION 0.1)
 
 # set compiler flags, mainly optimization
-set(CMAKE_C_FLAGS "-O3 -ffast-math -Wall")
+set(CMAKE_C_FLAGS "-O3 -ffast-math -Wall -std=c99")
 
 # find kissfft library
 find_library(KISSFFT_LIB kissfft-float kiss_fft_float HINTS ${SPECTRUM_SOURCE_DIR}/lib)

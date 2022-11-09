@@ -20,8 +20,8 @@
 #include <kissfft/kiss_fft.h>
 #include "spectral_opts.h"
 #include "tools.h"
-#include "windows.h"
 #include "spectral_common.h"
+#include "windowing.h"
 
 /**
  * Compute the Discrete Fourier Transform (DFT) sample frequencies.
@@ -63,7 +63,7 @@ void spectral_helper(double *data_x, double *data_y, double *freqs, double **psd
         int nperseg = spectralOpts->nperseg;
         int noverlap = spectralOpts->noverlap;
         int nstep = nperseg - noverlap;
-        kiss_fft_cfg cfg = kiss_fft_alloc(spectralOpts->nfft, 0, 0, 0);
+        kiss_fft_cfg cfg = kiss_fft_alloc(spectralOpts->nfft, 0, NULL, NULL);
         kiss_fft_cpx *in = (kiss_fft_cpx*) malloc(sizeof(kiss_fft_cpx) * spectralOpts->nfft);
         kiss_fft_cpx *out = (kiss_fft_cpx*) malloc(sizeof(kiss_fft_cpx) * spectralOpts->nfft);
         kiss_fft_cpx *data_cpx = (kiss_fft_cpx*) malloc(sizeof(kiss_fft_cpx) * N_x/2);
