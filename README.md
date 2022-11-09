@@ -1,7 +1,7 @@
-# SPECTRUM
+# Spectra
 A C library for spectral estimation and signal processing.
 
-The main goal of SPECTRUM is to provide a C library that can be easily used
+The main goal of Spectra is to provide a C library that can be easily used
 in scientific programming to perform spectral estimation and other operations
 such as spectrum sensing.
 
@@ -79,7 +79,7 @@ cmake --build build --target <target_name>
 ```
 
 The available target names are:  
-* `spectrum`: builds the shared library.
+* `spectra`: builds the shared library.
 * `examples`: builds all the examples (and also the library).
 * `detect_signal_aic_ed`: builds only the example (and the library).
 
@@ -89,7 +89,7 @@ The available target names are:
 CMake Error: The following variables are used in this project, but they are set to NOTFOUND.
 Please set them or make sure they are set and tested correctly in the CMake files:
 KISSFFT_LIB
-    linked by target "spectrum"
+    linked by target "spectra"
 ```
 1. Make sure that the library is installed or available in the `lib` project directory.
 2. CMake searches for `kissfft-float` and `kiss_fft_float` in the `lib` directory of the
