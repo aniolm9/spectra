@@ -17,7 +17,12 @@
 #include <stdio.h>
 #include <math.h>
 #include <kissfft/kiss_fft.h>
-#include "windows.h"
+
+#include "windowing.h"
+
+#ifndef M_PI
+#define M_PI 3.1415926535897932384626433
+#endif
 
 /**
  * Hann window.

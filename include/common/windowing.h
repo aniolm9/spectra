@@ -14,8 +14,8 @@
  * along with the software. If not, see <https://opensource.org/licenses/BSD-3-Clause>.
  */
 
-#ifndef WINDOWS_H
-#define WINDOWS_H
+#ifndef WINDOWING_H
+#define WINDOWING_H
     /* Types of window */
     #define RECTANGULAR 0
     #define HANN 1

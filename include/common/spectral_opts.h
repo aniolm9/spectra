@@ -26,7 +26,7 @@
      *  @var spectralOpts::fs
      *    Samplig frequency.
      *  @var spectralOpts::window
-     *    Window type. See windows.h for the available types.
+     *    Window type. See windowing.h for the available types.
      *  @var spectralOpts::nperseg
      *    Length of each segment.
      *  @var spectralOpts::noverlap

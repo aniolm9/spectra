@@ -31,7 +31,7 @@
  * @param noise_power Power of the noise.
  * @param Pfa Probability of false alarm.
  * @param df Degrees of freedom.
- * @param nstep Step size between energy windows, between 1 and df.
+ * @param nstep Step size between energy windows, between 1 (highest overlap) and df (no overlap).
  */
 void energy_detector(double *data, bool *signal_presence, int N, double noise_power, float Pfa, int df, int nstep) {
     /* Check that 1 <= nstep <= df */
@@ -49,18 +49,21 @@ void energy_detector(double *data, bool *signal_presence, int N, double noise_po
     int j, k;
     /* We decide signal presence in blocks of samples */
     for (j = 0; j < N-nstep; j += nstep) {
+        int looplim = (j+df < N) ? (j+df) : (N);
         energy = 0.0;
-        for (k = j; k < j+df; k++) {
+        for (k = j; k < looplim; k++) {
             energy += data_cpx[k].r*data_cpx[k].r + data_cpx[k].i*data_cpx[k].i;
         }
+        looplim = (j+nstep < N) ? (j+nstep) : (N);
         for (k = j; k < j+nstep; k++) {
             signal_presence[k] = energy > gamma;
         }
     }
     /* Detect the last samples */
     for (; j < N; j++) {
+        int looplim = (j+df < N) ? (j+df) : (N);
         energy = 0.0;
-        for (k = j; k < j+df; k++) {
+        for (k = j; k < looplim; k++) {
             energy += data_cpx[k].r*data_cpx[k].r + data_cpx[k].i*data_cpx[k].i;
         }
         signal_presence[j] = energy > gamma;

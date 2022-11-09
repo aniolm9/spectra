@@ -19,7 +19,8 @@
 #include <stdbool.h>
 #include <kissfft/kiss_fft.h>
 #include "spectral_opts.h"
-#include "windows.h"
+
+#include "windowing.h"
 
 /**
  * Compute the number of frames in which the data array is divided. It uses
